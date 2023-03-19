@@ -33,15 +33,10 @@ function is_jwt_valid($jwt, $secret = 'secret') {
 
 	// verify it matches the signature provided in the jwt
 	$is_signature_valid = ($base64_url_signature === $signature_provided);
-	$res = array();
 	if (!$is_signature_valid || $is_token_expired) {
-		array_push($res, FALSE);
-		return $res;
+		return FALSE;
 	} else {
-		array_push($res, TRUE);
-		array_push($res, $role);
-		return $res;
-		//return TRUE;
+		return TRUE;
 	}
 }
 

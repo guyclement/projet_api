@@ -20,7 +20,6 @@
             /// Récupération des données envoyées par le Client
             $postedData = file_get_contents('php://input');
             $data = json_decode($postedData, true);
-
             /// Traitement
             $keys = array_keys($data);
             if (in_array("pseudo", $keys) && in_array("motdepasse", $keys)){
@@ -35,14 +34,16 @@
                 $role = $results["role"];
                 if (!empty($results)){
                     $header = array("alg" => "HS256", "typ" => "JWT");
-                    $payloab = array("username" => $login, "role" => $role, "exp" => (time() + 60*60*12));
+                    $payloab = array("username" => $login, "role" => $role, "exp" => (time() + 60*60));
                     deliver_response(201, "login success", generate_jwt($header, $payloab));
                 }else {
                     deliver_response(403, "mauvais identifiant", null);
                 }
                 
             }else {
-                deliver_response(401 , "pas d'identifiant", NULL);//null = ce que je veux renvoyer
+                $header = array("alg" => "HS256", "typ" => "JWT");
+                $payloab = array("username" => "guest", "role" => "guest", "exp" => (time() + 60*60));
+                deliver_response(401 , "login as a guest", generate_jwt($header, $payloab));
             }
             break;
         }

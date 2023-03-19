@@ -26,11 +26,7 @@
     function test_token(){
         $bearer_token = '';
         $bearer_token = get_bearer_token();
-        if (is_jwt_valid($bearer_token)){
-            return true;
-        }else{
-            return false;
-        }
+        return is_jwt_valid($bearer_token);
     }
     function get_liste_like_dislike($idArticle,$statut, $linkpdo){
         $query = 'select pseudo from liker l where statut = '.$statut.' and l.id_article = '.$idArticle;
@@ -75,21 +71,36 @@
                 $postedData = file_get_contents('php://input');
                 $data = json_decode($postedData, true);
                 $keys = array_keys($data);
-                if(in_array("op", $keys)){
+                if (get_role() == "guest"){
+                    $sql = 'select auteur, datePublication, contenu from article a';
+                    $stmt = $linkpdo->prepare($sql);
+                    $stmt->execute();
+                    $array_complete = array();
+                    $i = 0;
+                    while($row = $stmt->fetch(PDO::FETCH_ASSOC))
+                    {
+                        $array_part = array();
+                        $array_part["auteur"] = $row["auteur"]; 
+                        $array_part["contenu"] = $row["contenu"];
+                        $array_part["datePublication"] = $row["datePublication"];
+                        $array_complete[$i] = $array_part;
+                        $i +=1;
+                    }
+                    deliver_response(201, "mon message", $array_complete);
+                }else if(in_array("op", $keys)){
                     switch($data["op"]){
                         case "all" :
                             //deliver_response(200, "token valide", null);
                             $sql = 'select * from article a';
                             $stmt = $linkpdo->prepare($sql);
                             $stmt->execute();
-                            //$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                            //deliver_response(200, "Tout les articles", $results);
                             $array_complete = array();
                             $i = 0;
                             while($row = $stmt->fetch(PDO::FETCH_ASSOC))
                             {
                                 $array_part = array();
-                                $array_part["auteur"] = $row["auteur"];
+                                $array_part["id_article"] = $row["id_article"];
+                                $array_part["auteur"] = $row["auteur"]; 
                                 $array_part["contenu"] = $row["contenu"];
                                 $array_part["datePublication"] = $row["datePublication"];
                                 if (get_role() == "moderator"){
@@ -102,10 +113,8 @@
                                 $i +=1;
                             }
                             deliver_response(201, "mon message", $array_complete);
-                            deliver_response(200, "role", get_role());
                             break;
                         case "mine" :
-                            if (get_role() == "publisher"){
                                 $sql = 'select * from article a where auteur ="'.get_user().'"';
                                 $stmt = $linkpdo->prepare($sql);
                                 $stmt->execute();
@@ -116,16 +125,20 @@
                                 while($row = $stmt->fetch(PDO::FETCH_ASSOC))
                                 {
                                     $array_part = array();
+                                    $array_part["id_article"] = $row["id_article"];
                                     $array_part["auteur"] = $row["auteur"];
                                     $array_part["contenu"] = $row["contenu"];
                                     $array_part["datePublication"] = $row["datePublication"];
+                                    if (get_role() == "moderator"){
+                                        $array_part["listeLike"]  = get_liste_like_dislike($row["id_article"], 1, $linkpdo);
+                                        $array_part["listeDislike"]  = get_liste_like_dislike($row["id_article"], 0, $linkpdo);
+                                    }
                                     $array_part["nombreLike"] = get_count_like_dislike($row["id_article"], 1, $linkpdo);
                                     $array_part["nombreDislike"] =  get_count_like_dislike($row["id_article"], 0, $linkpdo);
                                     $array_complete[$i] = $array_part;
                                     $i +=1;
                                 }
                                 deliver_response(201, "mon message", $array_complete);
-                                }
                             break;
                         default:
                             break;
@@ -138,41 +151,126 @@
             if (!test_token()){
                 deliver_response(403, "token non valide", null);
             }else {
-                $postedData = file_get_contents('php://input');
-                $data = json_decode($postedData, true);
-                /// Traitement
-                $keys = array_keys($data);
-                if (in_array("contenu", $keys) && in_array("auteur", $keys)){
-                    $sql = 'insert into article (contenu, datePublication, auteur) values ("'.$data["contenu"].'", now(),"'.$data["auteur"].'")';
-                    $stmt = $linkpdo->prepare($sql);
-                    $stmt->execute();
-                    deliver_response(201, "message bien enregistré", NULL);
+                if (get_role() == "publisher"){
+                    $postedData = file_get_contents('php://input');
+                    $data = json_decode($postedData, true);
+                    $keys = array_keys($data);
+                    if(in_array("op", $keys)){
+                        switch($data["op"]){
+                            case "add" :
+                                if (in_array("contenu", $keys)){
+                                    $sql = 'insert into article (contenu, datePublication, auteur) values ("'.$data["contenu"].'", now(),"'.get_user().'")';
+                                    $stmt = $linkpdo->prepare($sql);
+                                    $stmt->execute();
+                                    deliver_response(201, "message bien enregistré", NULL);
+                                }else{
+                                    deliver_response(401, "manque des éléments", NULL);
+                                } 
+                                break;
+                            case "like" :
+                                if(in_array("statut", $keys) && in_array("id_article", $keys)){
+                                    if ($data['statut'] == 1 || $data['statut'] == 0){
+                                        //vérifier si il y a déjà un like/dislike
+                                        $sql = 'select statut from liker where id_article = '.$data['id_article'].' and pseudo = "'.get_user().'"';
+                                        $stmt = $linkpdo->prepare($sql);
+                                        $stmt->execute();
+                                        if ($verif = $stmt->fetch()) {//vérifie si l'artcle nous appartient
+                                            //modifier
+                                            $sql2 = 'update liker set statut = '.$data["statut"].' where pseudo = "'.get_user().'" and id_article = '.$data['id_article'];
+                                            $stmt2 = $linkpdo->prepare($sql2);
+                                            $stmt2->execute();
+                                            deliver_response(201, "like bien enregistré", NULL);
+                                        }else {
+                                            //inserer
+                                            $sql2 = 'insert into liker values ('.$data['id_article'].', "'.get_user().'", '.$data["statut"].')';
+                                            $stmt2 = $linkpdo->prepare($sql2);
+                                            $stmt2->execute();
+                                            deliver_response(201, "like bien enregistré", NULL);
+                                        } 
+                                    }else{
+                                        deliver_response(401, "statut doit être égal à 0 ou 1", NULL);
+                                    }
+                                }
+                                break;
+                        }
+                    }
                 }else{
-                    deliver_response(401, "manque des éléments", NULL);
+                    #TODO
                 }
             }
             break;
         /// Cas de la méthode PUT
         case "PUT" :
+            if (!test_token()){
+                deliver_response(403, "token non valide", null);
+            }else {
+                if (get_role() == "publisher"){
+                    $postedData = file_get_contents('php://input');
+                    $data = json_decode($postedData, true);
+                    /// Traitement
+                    $keys = array_keys($data);
+                    if (in_array("id_article", $keys) && in_array("contenu", $keys)){
+                        $sql = 'select * from article where id_article = '.$data['id_article'].' and auteur = "'.get_user().'"';
+                        $stmt = $linkpdo->prepare($sql);
+                        $stmt->execute();
+                        if ($verif = $stmt->fetch()) {//vérifie si l'artcle nous appartient
+                            $sql2 = 'update article set contenu = "'.$data['contenu'].'" where id_article = '.$data['id_article'].' and auteur = "'.get_user().'"';
+                            $stmt2 = $linkpdo->prepare($sql2);
+                            $stmt2->execute();
+                            deliver_response(201, "article bien modifié", NULL);
+                        }else{
+                            deliver_response(401, "Article manquant ou ne vous appartenant pas", NULL);
+                        }
+                    }else {
+                        deliver_response(401, "manque des éléments", NULL);
+                    }
+                }
+            }
             break;
         /// Cas de la méthode DELETE
+        case "DELETE": 
+            if (!test_token()){
+                deliver_response(403, "token non valide", null);
+            }else {
+                if (get_role() == "moderator"){
+                    $postedData = file_get_contents('php://input');
+                    $data = json_decode($postedData, true);
+                    /// Traitement
+                    $keys = array_keys($data);
+                    if (in_array("id_article", $keys)){
+                        $sql = 'delete from article where id_article = '.$data['id_article'];
+                        $stmt = $linkpdo->prepare($sql);
+                        $stmt->execute();
+                        deliver_response(201, "message bien supprimé", NULL);
+                    }else {
+                        deliver_response(401, "manque des éléments", NULL);
+                    }
+                }else if (get_role() == "publisher"){
+                    $postedData = file_get_contents('php://input');
+                    $data = json_decode($postedData, true);
+                    $keys = array_keys($data);
+                    if (in_array("id_article", $keys)){
+                        $sql = 'select * from article where id_article = '.$data['id_article'].' and auteur = "'.get_user().'"';
+                        $stmt = $linkpdo->prepare($sql);
+                        $stmt->execute();
+                        if ($verif = $stmt->fetch()) {
+                            $sql2 = 'delete from article where id_article = '.$data['id_article'].' and auteur = "'.get_user().'"';
+                            $stmt2 = $linkpdo->prepare($sql2);
+                            $stmt2->execute();
+                            deliver_response(201, "message bien supprimé", NULL);
+                        } else {
+                            deliver_response(401, "Article manquant ou ne vous appartenant pas", NULL);
+                        }
+                    }else {
+                        deliver_response(401, "manque des éléments", NULL);
+                    }
+                }
+            }
+            break;
         default :
         break;
-        /*
-            /// Récupération de l'identifiant de la ressource envoyé par le Client
-            if (!empty($_GET['mon_id'])){
-            /// Traitement
-                $sql = 'delete from chuckn_facts where id = '.$_GET['id'];
-                $stmt = $linkpdo->prepare($sql);
-                $stmt->execute();
-            }
-            /// Envoi de la réponse au Client
-            deliver_response(200, $sql, NULL);
-            break;
-        */
         }
         /// Envoi de la réponse au Client
-
     function deliver_response($status, $status_message, $data){
         /// Paramétrage de l'entête HTTP, suite
         header("HTTP/1.1 $status $status_message");
