@@ -89,8 +89,31 @@
                     deliver_response(201, "mon message", $array_complete);
                 }else if(in_array("op", $keys)){
                     switch($data["op"]){
-                        case "all" :
-                            //deliver_response(200, "token valide", null);
+                        case "mine" :
+                                $sql = 'select * from article a where auteur ="'.get_user().'"';
+                                $stmt = $linkpdo->prepare($sql);
+                                $stmt->execute();
+                                $array_complete = array();
+                                $i = 0;
+                                while($row = $stmt->fetch(PDO::FETCH_ASSOC))
+                                {
+                                    $array_part = array();
+                                    $array_part["id_article"] = $row["id_article"];
+                                    $array_part["auteur"] = $row["auteur"];
+                                    $array_part["contenu"] = $row["contenu"];
+                                    $array_part["datePublication"] = $row["datePublication"];
+                                    if (get_role() == "moderator"){
+                                        $array_part["listeLike"]  = get_liste_like_dislike($row["id_article"], 1, $linkpdo);
+                                        $array_part["listeDislike"]  = get_liste_like_dislike($row["id_article"], 0, $linkpdo);
+                                    }
+                                    $array_part["nombreLike"] = get_count_like_dislike($row["id_article"], 1, $linkpdo);
+                                    $array_part["nombreDislike"] =  get_count_like_dislike($row["id_article"], 0, $linkpdo);
+                                    $array_complete[$i] = $array_part;
+                                    $i +=1;
+                                }
+                                deliver_response(200, "TODO", $array_complete);
+                            break;
+                        default:
                             $sql = 'select * from article a';
                             $stmt = $linkpdo->prepare($sql);
                             $stmt->execute();
@@ -112,35 +135,7 @@
                                 $array_complete[$i] = $array_part;
                                 $i +=1;
                             }
-                            deliver_response(201, "mon message", $array_complete);
-                            break;
-                        case "mine" :
-                                $sql = 'select * from article a where auteur ="'.get_user().'"';
-                                $stmt = $linkpdo->prepare($sql);
-                                $stmt->execute();
-                                //$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                                //deliver_response(200, "Tout les articles", $results);
-                                $array_complete = array();
-                                $i = 0;
-                                while($row = $stmt->fetch(PDO::FETCH_ASSOC))
-                                {
-                                    $array_part = array();
-                                    $array_part["id_article"] = $row["id_article"];
-                                    $array_part["auteur"] = $row["auteur"];
-                                    $array_part["contenu"] = $row["contenu"];
-                                    $array_part["datePublication"] = $row["datePublication"];
-                                    if (get_role() == "moderator"){
-                                        $array_part["listeLike"]  = get_liste_like_dislike($row["id_article"], 1, $linkpdo);
-                                        $array_part["listeDislike"]  = get_liste_like_dislike($row["id_article"], 0, $linkpdo);
-                                    }
-                                    $array_part["nombreLike"] = get_count_like_dislike($row["id_article"], 1, $linkpdo);
-                                    $array_part["nombreDislike"] =  get_count_like_dislike($row["id_article"], 0, $linkpdo);
-                                    $array_complete[$i] = $array_part;
-                                    $i +=1;
-                                }
-                                deliver_response(201, "mon message", $array_complete);
-                            break;
-                        default:
+                            deliver_response(200, "TODO", $array_complete);
                             break;
                     }
                 }
@@ -219,7 +214,7 @@
                             $stmt2->execute();
                             deliver_response(201, "article bien modifié", NULL);
                         }else{
-                            deliver_response(401, "Article manquant ou ne vous appartenant pas", NULL);
+                            deliver_response(403, "Article manquant ou ne vous appartenant pas", NULL);
                         }
                     }else {
                         deliver_response(401, "manque des éléments", NULL);
@@ -243,7 +238,7 @@
                         $stmt->execute();
                         deliver_response(201, "message bien supprimé", NULL);
                     }else {
-                        deliver_response(401, "manque des éléments", NULL);
+                        deliver_response(401, "Il manque des éléments dans la requête", NULL);
                     }
                 }else if (get_role() == "publisher"){
                     $postedData = file_get_contents('php://input');
@@ -259,16 +254,17 @@
                             $stmt2->execute();
                             deliver_response(201, "message bien supprimé", NULL);
                         } else {
-                            deliver_response(401, "Article manquant ou ne vous appartenant pas", NULL);
+                            deliver_response(403, "Article inexistant ou ne vous appartenant pas", NULL);
                         }
                     }else {
-                        deliver_response(401, "manque des éléments", NULL);
+                        deliver_response(401, "Il manque des éléments dans la requête", NULL);
                     }
                 }
             }
             break;
         default :
-        break;
+            deliver_response(404, "Method not find", NULL);
+            break;
         }
         /// Envoi de la réponse au Client
     function deliver_response($status, $status_message, $data){
