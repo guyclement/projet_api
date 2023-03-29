@@ -86,7 +86,7 @@
                         $array_complete[$i] = $array_part;
                         $i +=1;
                     }
-                    deliver_response(201, "mon message", $array_complete);
+                    deliver_response(201, "Voici la liste des articles ", $array_complete);
                 }else if(in_array("op", $keys)){
                     switch($data["op"]){
                         case "mine" :
@@ -102,16 +102,12 @@
                                     $array_part["auteur"] = $row["auteur"];
                                     $array_part["contenu"] = $row["contenu"];
                                     $array_part["datePublication"] = $row["datePublication"];
-                                    if (get_role() == "moderator"){
-                                        $array_part["listeLike"]  = get_liste_like_dislike($row["id_article"], 1, $linkpdo);
-                                        $array_part["listeDislike"]  = get_liste_like_dislike($row["id_article"], 0, $linkpdo);
-                                    }
                                     $array_part["nombreLike"] = get_count_like_dislike($row["id_article"], 1, $linkpdo);
                                     $array_part["nombreDislike"] =  get_count_like_dislike($row["id_article"], 0, $linkpdo);
                                     $array_complete[$i] = $array_part;
                                     $i +=1;
                                 }
-                                deliver_response(200, "TODO", $array_complete);
+                                deliver_response(200, "Voici la liste des articles", $array_complete);
                             break;
                         default:
                             $sql = 'select * from article a';
@@ -135,10 +131,12 @@
                                 $array_complete[$i] = $array_part;
                                 $i +=1;
                             }
-                            deliver_response(200, "TODO", $array_complete);
+                            deliver_response(200, "Voici la liste des articles", $array_complete);
                             break;
                     }
-                }
+                }else {
+                    deliver_response(401, "Il manque des éléments dans la requête", NULL);
+                } 
             }
             break;
         /// Cas de la méthode POST
