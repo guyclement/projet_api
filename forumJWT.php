@@ -43,7 +43,7 @@
             }else {
                 $header = array("alg" => "HS256", "typ" => "JWT");
                 $payloab = array("username" => "guest", "role" => "guest", "exp" => (time() + 60*60));
-                deliver_response(401 , "login as a guest", generate_jwt($header, $payloab));
+                deliver_response(201 , "login as a guest", generate_jwt($header, $payloab));
             }
             break;
         }

@@ -1,0 +1,199 @@
+{
+	"info": {
+		"_postman_id": "a4f8d5a3-7ffc-497e-82f1-c9869ce2e09b",
+		"name": "guyon_chipolina_userStories",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25741854"
+	},
+	"item": [
+		{
+			"name": "get token as moderator",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"pseudo\": \"moderator\", \"motdepasse\" : \"motdepasse\"}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost/projet_api/forumjwt.php",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"projet_api",
+						"forumjwt.php"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get token as publisher name \"utilisateur\"",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"pseudo\": \"utilisateur\", \"motdepasse\" : \"motdepasse\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost/projet_api/forumjwt.php",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"projet_api",
+						"forumjwt.php"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get token as a guest",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost/projet_api/forumjwt.php",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"projet_api",
+						"forumjwt.php"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete article 4 (need a bearer token)",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1vZGVyYXRvciIsInJvbGUiOiJtb2RlcmF0b3IiLCJleHAiOjE2ODAxMjIyNjZ9.DJ6GITHjz7w3JnOQr2KJc4kCcwNEqkl19lG6NxEr5U8",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"id_article\" : \"4\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost/projet_api/forumapi.php",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"projet_api",
+						"forumapi.php"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get article as a guest (need a bearer token)",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Imd1ZXN0Iiwicm9sZSI6Imd1ZXN0IiwiZXhwIjoxNjgwMTIyNDIyfQ.AFfBivdGsWORc21_4Obcpknq2TNIHVfaFYi-FnxgkJg",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost/projet_api/forumapi.php",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"projet_api",
+						"forumapi.php"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add an article (need a bearer token)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InV0aWxpc2F0ZXVyIiwicm9sZSI6InB1Ymxpc2hlciIsImV4cCI6MTY4MDEyMjY1MX0.pzZuA2HsNP2Vjg76rxvkqNaxjpFmS4Yrd7LjTCNj2w4",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"op\":\"add\", \"contenu\" : \"un super article\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost/projet_api/forumapi.php",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"projet_api",
+						"forumapi.php"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

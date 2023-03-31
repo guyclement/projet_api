@@ -86,7 +86,7 @@
                         $array_complete[$i] = $array_part;
                         $i +=1;
                     }
-                    deliver_response(201, "mon message", $array_complete);
+                    deliver_response(201, "Voici la liste des articles ", $array_complete);
                 }else if(in_array("op", $keys)){
                     switch($data["op"]){
                         case "mine" :
@@ -102,16 +102,12 @@
                                     $array_part["auteur"] = $row["auteur"];
                                     $array_part["contenu"] = $row["contenu"];
                                     $array_part["datePublication"] = $row["datePublication"];
-                                    if (get_role() == "moderator"){
-                                        $array_part["listeLike"]  = get_liste_like_dislike($row["id_article"], 1, $linkpdo);
-                                        $array_part["listeDislike"]  = get_liste_like_dislike($row["id_article"], 0, $linkpdo);
-                                    }
                                     $array_part["nombreLike"] = get_count_like_dislike($row["id_article"], 1, $linkpdo);
                                     $array_part["nombreDislike"] =  get_count_like_dislike($row["id_article"], 0, $linkpdo);
                                     $array_complete[$i] = $array_part;
                                     $i +=1;
                                 }
-                                deliver_response(200, "TODO", $array_complete);
+                                deliver_response(200, "Voici la liste des articles", $array_complete);
                             break;
                         default:
                             $sql = 'select * from article a';
@@ -135,10 +131,12 @@
                                 $array_complete[$i] = $array_part;
                                 $i +=1;
                             }
-                            deliver_response(200, "TODO", $array_complete);
+                            deliver_response(200, "Voici la liste des articles", $array_complete);
                             break;
                     }
-                }
+                }else {
+                    deliver_response(401, "Il manque des éléments dans la requête", NULL);
+                } 
             }
             break;
         /// Cas de la méthode POST
@@ -157,9 +155,9 @@
                                     $sql = 'insert into article (contenu, datePublication, auteur) values ("'.$data["contenu"].'", now(),"'.get_user().'")';
                                     $stmt = $linkpdo->prepare($sql);
                                     $stmt->execute();
-                                    deliver_response(201, "message bien enregistré", NULL);
+                                    deliver_response(201, "Article bien enregistré", NULL);
                                 }else{
-                                    deliver_response(401, "manque des éléments", NULL);
+                                    deliver_response(401, "Il manque des éléments dans la requête", NULL);
                                 } 
                                 break;
                             case "like" :
@@ -185,7 +183,9 @@
                                     }else{
                                         deliver_response(401, "statut doit être égal à 0 ou 1", NULL);
                                     }
-                                }
+                                }else {
+                                    deliver_response(401, "Il manque des éléments dans la requête", NULL);
+                                } 
                                 break;
                         }
                     }
@@ -212,12 +212,12 @@
                             $sql2 = 'update article set contenu = "'.$data['contenu'].'" where id_article = '.$data['id_article'].' and auteur = "'.get_user().'"';
                             $stmt2 = $linkpdo->prepare($sql2);
                             $stmt2->execute();
-                            deliver_response(201, "article bien modifié", NULL);
+                            deliver_response(201, "Article bien modifié", NULL);
                         }else{
                             deliver_response(403, "Article manquant ou ne vous appartenant pas", NULL);
                         }
                     }else {
-                        deliver_response(401, "manque des éléments", NULL);
+                        deliver_response(401, "Il manque des éléments dans la requête", NULL);
                     }
                 }
             }
@@ -236,7 +236,7 @@
                         $sql = 'delete from article where id_article = '.$data['id_article'];
                         $stmt = $linkpdo->prepare($sql);
                         $stmt->execute();
-                        deliver_response(201, "message bien supprimé", NULL);
+                        deliver_response(201, "Article bien supprimé", NULL);
                     }else {
                         deliver_response(401, "Il manque des éléments dans la requête", NULL);
                     }
@@ -252,7 +252,7 @@
                             $sql2 = 'delete from article where id_article = '.$data['id_article'].' and auteur = "'.get_user().'"';
                             $stmt2 = $linkpdo->prepare($sql2);
                             $stmt2->execute();
-                            deliver_response(201, "message bien supprimé", NULL);
+                            deliver_response(201, "Article bien supprimé", NULL);
                         } else {
                             deliver_response(403, "Article inexistant ou ne vous appartenant pas", NULL);
                         }
